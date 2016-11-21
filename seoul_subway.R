@@ -8,7 +8,7 @@ library(dplyr)
 date<-c(20161022,20161029,20161105,20161112)
 url<-list()
 for (i in 1:length(date)){
-url[i]<-paste0('http://openapi.seoul.go.kr:8088/68796451636b6867393077596f564b/xml/CardSubwayStatsNew/1/1000/',date[i])
+url[i]<-paste0('http://openapi.seoul.go.kr:8088/{api_key}/xml/CardSubwayStatsNew/1/1000/',date[i])
 }
 
 url_xml<-list()
