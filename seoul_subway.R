@@ -1,10 +1,12 @@
+# Create cartogram w/ Seoul subway data during candlelight vigil in 2016 Korea.
+
 library(xml2)
 library(rvest)
 library(ggplot2)
 library(tidyr)
 library(dplyr)
 
-#subway num from openapi
+# Getting the numbef of Passengers from Seoul Open data api.
 date<-c(20161022,20161029,20161105,20161112)
 url<-list()
 for (i in 1:length(date)){
@@ -45,11 +47,12 @@ subway_name <- subway %>% separate(name, into = c("lv0","lv1"), sep = "\\(")
 subway_name <- subway_name[c(-7)]
 names(subway_name)[6] <-'name'
 
+# Visualize the line and time with the number of passagers.
 theme_set(theme_gray(base_family='NanumGothic'))
 ggplot(data=subway_name, aes(x=line, y=num.ride)) + geom_bar(stat="identity") + facet_grid(~time)
 ggplot(data=subway_name, aes(x=time, y=num.ride)) + geom_bar(stat="identity")
 
-#location
+# Getting location Information of subway station from Daum search
 url_daum<-paste0('http://search.daum.net/search?nil_suggest=btn&w=tot&DA=SBC&q=',subway_name[1:nrow(subway_name),6])
 url_daum<-unique(url_daum)
 url_daum<-gsub(" ", "", url_daum)
@@ -87,7 +90,7 @@ info_name_level_name <- info_name_level %>% separate(name, into = c("lv0","lv1")
 info_name_level_name <- info_name_level_name[c(-2)]
 names(info_name_level_name)[1] <-'name'
 
-#merge
+# merge
 subway_loc<-merge(subway_name, info_name_level_name, c('name'))
 
 theme_set(theme_gray(base_family='NanumGothic'))
