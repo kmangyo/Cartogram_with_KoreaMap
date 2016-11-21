@@ -1,16 +1,14 @@
-# Seoul subway users by week
-
 library(xml2)
 library(rvest)
 library(ggplot2)
 library(tidyr)
 library(dplyr)
 
-#subway num from seoul openapi
-date<-c(20161031,20161101:20161106)
+#subway num from openapi
+date<-c(20161022,20161029,20161105,20161112)
 url<-list()
 for (i in 1:length(date)){
-url[i]<-paste0('http://openapi.seoul.go.kr:8088/{api}/xml/CardSubwayStatsNew/1/1000/',date[i])
+url[i]<-paste0('http://openapi.seoul.go.kr:8088/68796451636b6867393077596f564b/xml/CardSubwayStatsNew/1/1000/',date[i])
 }
 
 url_xml<-list()
@@ -25,11 +23,11 @@ num.ride<-list()
 num.alight<-list()
 
 for(i in 1:length(url_xml)){
-time[[i]]<- url_xml[[i]] %>% xml_find_all("//USE_DT") %>% xml_text()
-line[[i]]<- url_xml[[i]] %>% xml_find_all("//LINE_NUM") %>% xml_text()
-station[[i]]<- url_xml[[i]] %>% xml_find_all("//SUB_STA_NM") %>% xml_text()
-num.ride[[i]]<- url_xml[[i]] %>% xml_find_all("//RIDE_PASGR_NUM") %>% xml_text()
-num.alight[[i]]<- url_xml[[i]] %>% xml_find_all("//ALIGHT_PASGR_NUM") %>% xml_text()
+  time[[i]]<- url_xml[[i]] %>% xml_find_all("//USE_DT") %>% xml_text()
+  line[[i]]<- url_xml[[i]] %>% xml_find_all("//LINE_NUM") %>% xml_text()
+  station[[i]]<- url_xml[[i]] %>% xml_find_all("//SUB_STA_NM") %>% xml_text()
+  num.ride[[i]]<- url_xml[[i]] %>% xml_find_all("//RIDE_PASGR_NUM") %>% xml_text()
+  num.alight[[i]]<- url_xml[[i]] %>% xml_find_all("//ALIGHT_PASGR_NUM") %>% xml_text()
 }
 
 time<-unlist(time)
@@ -43,13 +41,19 @@ subway<-data.frame(subway)
 subway$num.ride<-as.numeric(as.character(subway$num.ride))
 subway$num.alight<-as.numeric(as.character(subway$num.alight))
 
+subway_name <- subway %>% separate(name, into = c("lv0","lv1"), sep = "\\(")
+subway_name <- subway_name[c(-7)]
+names(subway_name)[6] <-'name'
+
 theme_set(theme_gray(base_family='NanumGothic'))
-ggplot(data=subway, aes(x=line, y=num.ride)) + geom_bar(stat="identity") + facet_grid(~time)
-ggplot(data=subway, aes(x=time, y=num.ride)) + geom_bar(stat="identity")
+ggplot(data=subway_name, aes(x=line, y=num.ride)) + geom_bar(stat="identity") + facet_grid(~time)
+ggplot(data=subway_name, aes(x=time, y=num.ride)) + geom_bar(stat="identity")
 
 #location
-url_daum<-paste0('http://search.daum.net/search?nil_suggest=btn&w=tot&DA=SBC&q=',subway[1:nrow(subway),2], subway[1:nrow(subway),3])
+url_daum<-paste0('http://search.daum.net/search?nil_suggest=btn&w=tot&DA=SBC&q=',subway_name[1:nrow(subway_name),6])
 url_daum<-unique(url_daum)
+url_daum<-gsub(" ", "", url_daum)
+
 info<-list()
 for(i in 1:length(url_daum)){
   info[[i]]<-read_html(url_daum[i]) %>% html_nodes('.detail') %>% html_text()
@@ -79,18 +83,20 @@ names(info_name)<-c('name','address')
 info_name_level <- info_name %>% separate(address, into = c("lv0","lv1","lv2","lv3"), sep = " ")
 info_name_level <- subset(info_name_level, lv1==c('서울특별시'))
 info_name_level <- info_name_level[c(1,4)]
+info_name_level_name <- info_name_level %>% separate(name, into = c("lv0","lv1"), sep = "\\(")
+info_name_level_name <- info_name_level_name[c(-2)]
+names(info_name_level_name)[1] <-'name'
 
 #merge
-subway$name <- with(subway, paste0(line,c(' '),station))
-subway_loc<-merge(subway, info_name_level, c('name'))
+subway_loc<-merge(subway_name, info_name_level_name, c('name'))
 
 theme_set(theme_gray(base_family='NanumGothic'))
 ggplot(data=subway_loc, aes(x=line, y=num.ride)) + geom_bar(stat="identity") #+ facet_grid(~time)
 ggplot(data=subway_loc, aes(x=time, y=num.ride)) + geom_bar(stat="identity")
 
 subway_loc_lv2<-subway_loc %>% group_by(time,lv2) %>% summarise(num.ride=sum(num.ride),num.alight=sum(num.alight))
-ggplot(data=subset(subway_loc_lv2,time==20161031), aes(x=lv2, y=num.ride)) + geom_bar(stat="identity") #+ facet_grid(~time)
-ggplot(data=subset(subway_loc_lv2,time==20161105), aes(x=lv2, y=num.ride)) + geom_bar(stat="identity")
+ggplot(data=subset(subway_loc,time==20161029), aes(x=lv2, y=num.ride)) + geom_bar(stat="identity") #+ facet_grid(~time)
+ggplot(data=subset(subway_loc,time==20161112), aes(x=lv2, y=num.ride)) + geom_bar(stat="identity")
 
 library(cartogram)
 library(tmap)
@@ -105,25 +111,32 @@ people<-function(Seoul2,subway_loc_lv2,date) {
   subway_loc_lv2_sub<-subset(subway_loc_lv2,time==date)
   names(subway_loc_lv2_sub)[2]<-'name'
   name_order<-left_join(name_order, subway_loc_lv2_sub,c('name'))
-  people<-name_order[1:nrow(name_order),3]
+  people<-name_order[1:nrow(name_order),4]
   return(people)
 }
 
-people_1031<-people(Seoul2,subway_loc_lv2,20161031)
+people_1022<-people(Seoul2,subway_loc_lv2,20161022)
+people_1029<-people(Seoul2,subway_loc_lv2,20161029)
 people_1105<-people(Seoul2,subway_loc_lv2,20161105)
+people_1112<-people(Seoul2,subway_loc_lv2,20161112)
 
-Seoul2$people_1031<-people_1031
+Seoul2$people_1022<-people_1022
+Seoul2$people_1029<-people_1029
 Seoul2$people_1105<-people_1105
+Seoul2$people_1112<-people_1112
 
 Seoul2 <- spTransform(Seoul2, CRS("+init=epsg:3395"))
-Seoul2 <- cartogram(Seoul2, "people_1031", itermax=200, threshold=0.01)
-ani1<-qtm(Seoul2, "people_1031")+tm_layout(fontfamily="AppleGothic")
+Seoul2 <- cartogram(Seoul2, "people_1022", itermax=200, threshold=0.01)
+qtm(Seoul2, "people_1022")+tm_layout(fontfamily="AppleGothic")
+
+Seoul2 <- spTransform(Seoul2, CRS("+init=epsg:3395"))
+Seoul2 <- cartogram(Seoul2, "people_1029", itermax=200, threshold=0.01)
+qtm(Seoul2, "people_1029")+tm_layout(fontfamily="AppleGothic")
 
 Seoul2 <- spTransform(Seoul2, CRS("+init=epsg:3395"))
 Seoul2 <- cartogram(Seoul2, "people_1105", itermax=200, threshold=0.01)
-ani2<-qtm(Seoul2, "people_1105")+tm_layout(fontfamily="AppleGothic")
+qtm(Seoul2, "people_1105")+tm_layout(fontfamily="AppleGothic")
 
 Seoul2 <- spTransform(Seoul2, CRS("+init=epsg:3395"))
-Seoul2 <- cartogram(Seoul2, "people_1104", itermax=200, threshold=0.01)
-qtm(Seoul2, "people_1104")+tm_layout(fontfamily="AppleGothic")
-
+Seoul2 <- cartogram(Seoul2, "people_1112", itermax=200, threshold=0.01)
+qtm(Seoul2, "people_1112")+tm_layout(fontfamily="AppleGothic")
