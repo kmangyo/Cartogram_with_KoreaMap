@@ -1,5 +1,4 @@
 # 2016 촛불 시위 기간동안 서울 지하철 승객 데이터를 사용하여, 서울시의 카토그램(cargotram) 지도 만들기
-
 library(xml2)
 library(rvest)
 library(ggplot2)
@@ -13,7 +12,6 @@ library(Kormaps)
 # 서울시 오픈API를 사용하여 승하차 데이터를 수집할 수 있다. 10/22 부터 11/12까지 매주 토요일 승하차 데이터를 수집
 # http://data.seoul.go.kr/openinf/sheetview.jsp?tMenu=11&leftSrvType=S&infId=OA-12914
 # 위의 URL에가면 데이터에 대한 자세한 정보 수집 가능
-
 date<-c(20161022,20161029,20161105,20161112)
 url<-list()
 for (i in 1:length(date)){
