@@ -18,6 +18,7 @@ for (i in 1:length(date)){
   url[i]<-paste0('http://openapi.seoul.go.kr:8088/{api_key}/xml/CardSubwayStatsNew/1/1000/',date[i])
 }
 
+# xml2 패키지를 사용하여 API를 통해 받은 데이터를 data.frame으로 변환
 url_xml<-list()
 for(i in 1:length(url)){
   url_xml[[i]] <- read_xml(url[[i]])
