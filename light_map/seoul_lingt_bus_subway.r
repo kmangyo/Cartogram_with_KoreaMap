@@ -185,6 +185,7 @@ ggplot(seoul_gg, aes(x=long, y=lat, group=group)) + geom_polygon(colour="#000233
         ,legend.position = "none"
   )
 
+# Create gif animation
 library(gganimate)
 library(animation)
 
@@ -237,8 +238,6 @@ seq1<-seq(1,39000, 1000)
 seq2<-seq(1000,39000, 1000)
 seq2<-c(seq2,39000)
 seq_date <-data.frame(seq1=rep(seq1,length(date)),seq2=rep(seq2,length(date)),date=rep(date,length(seq1)))
-
-# seq_date %>% arrange(date, seq1) %>% head(40)
 
 for (i in 1:nrow(seq_date)) {
   url_bus[i]<-paste0('http://openapi.seoul.go.kr:8088/',api_key,'/xml/CardBusStatisticsServiceNew/',seq_date[i,1],'/'
